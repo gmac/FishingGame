@@ -1,0 +1,35 @@
+<html>
+<head>
+	<title>HTML5 Canvas Fishing Game</title>
+	<link rel="stylesheet" href="styles/fishing.css" type="text/css" media="screen"/>
+	<script src="js/jquery-1.6.2.min.js" type="text/javascript"></script>
+	<script src="js/swfobject.js" type="text/javascript"></script>
+	<script src="js/fishing.js" type="text/javascript"></script>
+	<script type="text/javascript">
+		$(document).ready(function(){
+			fishingGame.init('fishing');
+		});
+	</script>
+	
+	<style type="text/css">
+	body {
+		background-color:#666;
+		font:10px/1.5em Arial, Helvetica, sans-serif;
+	}
+	#page {
+		background-color:#fff;
+		margin:25px auto;
+		width:1024px;
+	}
+	#page p {
+		padding:0 10px 10px;
+	}
+	</style>
+</head>
+<body>
+	<div id="page">
+		<div id="fishing"></div>
+		<p><a href="#" id="playback">stop</a> &nbsp;|&nbsp; <a href="js/fishing.js">javascript</a></p>
+	</div>
+</body>
+</html>

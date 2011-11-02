@@ -1,0 +1,118 @@
+@font-face {
+    font-family:'PlugNickel';
+    src: url('Plug-NickelBlack-webfont.eot');
+    src: url('Plug-NickelBlack-webfont.eot?#iefix') format('embedded-opentype'),
+         url('Plug-NickelBlack-webfont.woff') format('woff'),
+         url('Plug-NickelBlack-webfont.ttf') format('truetype'),
+         url('Plug-NickelBlack-webfont.svg#PlugNickel') format('svg');
+    font-weight:normal;
+    font-style:normal;
+}
+
+/* General styles
+----------------------------------- */
+#fishing {
+	background:url("../media/background.jpg") no-repeat;
+	border:1px solid #000;
+	position:relative;
+}
+	#fishing, #fishing .fishing-view {
+		height:768px;
+		width:1024px;
+	}
+	#fishing .fishing-view {
+		left:0;
+		position:absolute;
+		top:0;
+	}
+#fishing button {
+	background:url("../media/buttons.png") no-repeat;
+	border:none;
+	cursor:pointer;
+	display:block;
+	height:48px;
+	overflow:hidden;
+	position:absolute;
+	text-indent:-500px;
+	width:160px;
+}
+	#fishing button:hover {
+		background-position:0 -48px;
+	}
+
+/* ALL Screens
+----------------------------------- */
+#fishing .fishing-game-score {
+	background:url('../media/sprites.png') no-repeat -448px -58px;
+	display:block;
+	font:bold 20px/34px "PlugNickel", Arial, Helvetica, sans-serif;
+	height:38px;
+	left:20px;
+	padding:0 0 0 38px;
+	position:absolute;
+	top:16px;
+	width:200px;
+}
+#fishing .fishing-game-net {
+	background:url('../media/sprites.png') no-repeat;
+	display:block;
+	position:absolute;
+}
+
+/* INTRO Screen
+----------------------------------- */
+#fishing .fishing-intro {
+	background:url("../media/intro.png") no-repeat center 131px;
+	text-align:center;
+}
+	#fishing .fishing-intro button {
+		left:432px;
+		top:668px;
+	}
+
+/* OUTRO Screen
+----------------------------------- */
+#fishing .fishing-outro {
+	
+}
+	#fishing .fishing-outro button {
+		top:350px;
+	}
+	#fishing .fishing-outro button.fishing-outro-replay {
+		background-position:-160px 0;
+		left:312px;
+	}
+		#fishing .fishing-outro button.fishing-outro-replay:hover {
+			background-position:-160px -48px;
+		}
+	#fishing .fishing-outro button.fishing-outro-restart {
+		background-position:-320px 0;
+		right:312px;
+	}
+		#fishing .fishing-outro button.fishing-outro-restart:hover {
+			background-position:-320px -48px;
+		}
+
+/* GAME Screen
+----------------------------------- */
+#fishing .fishing-game {
+	
+}	
+	#fishing .fishing-game .fishing-game-message {
+		color:#fff;
+		font:bold 44px/1em "PlugNickel", Arial, Helvetica, sans-serif;
+		left:0;
+		position:absolute;
+		text-align:center;
+		text-shadow:rgba(0,0,0,0.3) 2px 3px 1px;
+		top:300px;
+		width:100%;
+	}
+
+/* ASSETS
+----------------------------------- */
+#fishing #fishing-sound {
+	position:absolute;
+	right:0;
+	top:0;
+}
