@@ -37,33 +37,36 @@ function FishingGame(domId){
 	*/
 	function sound(){
 		var _player;
-		var _getPlayer = function() {
-			if (!_player) _player = $('#fishing-sound').get(0);
-			return _player;
+		var _audioEnabled = false;
+		
+		function _setupSound() {
+			if (!_player) {
+				_player = $('#fishing-sound').get(0);
+				_audioEnabled = (!!_player && !!_player.startMusic);
+			}
 		}
+		
 		return {
-			init:function(player){
-				_player = player;
-			},
 			startMusic:function(){
-				_getPlayer().startMusic();
+				_setupSound();
+				if (_audioEnabled) _player.startMusic();
 			},
 			stopMusic:function(){
-				_getPlayer().stopMusic();
+				if (_audioEnabled) _player.stopMusic();
 			},
 			goodCatch:function(){
-				_getPlayer().catch();
+				if (_audioEnabled) _player.catch();
 			},
 			badCatch:function(){
-				_getPlayer().block();
+				if (_audioEnabled) _player.block();
 			},
 			block:function(){
-				_getPlayer().block();
+				if (_audioEnabled) _player.block();
 			},
 			timeout:function(){
-				_getPlayer().timeout();
+				if (_audioEnabled) _player.timeout();
 			},
-		}
+		};
 	}
 		
 	/**
@@ -1040,7 +1043,7 @@ function FishingGame(domId){
 		_game = game(dom);
 		_score = $('<div/>').addClass('fishing-game-score').appendTo(dom);
 		_sound = sound();
-		
+
 		// Sound container
 		var soundId = 'fishing-sound';
 		$('<div/>').attr({id:soundId}).appendTo(dom);
@@ -1050,7 +1053,7 @@ function FishingGame(domId){
 			id:soundId,
 			name:soundId,
 		});
-		
+
 		// _sprites sheet image
 		_sprites = $('<img/>')
 			.attr({src:'media/sprites.png'})
