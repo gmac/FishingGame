@@ -1,5 +1,5 @@
 /*global $, swfobject */
-/*jslint eqeqeq: true, laxbreak: true, plusplus: false, white: false */
+/*jslint browser: true, white: true, nomen: true, plusplus: true, vars: true */
 
 /*window.requestAnimFrame = (function(){
 	return  window.requestAnimationFrame || 
@@ -13,11 +13,12 @@
 })();*/
 
 var fishingGame = (function(){
+"use strict";
 
 /**
 * Main function for creating and managing a single fishing game instance.
 */
-function FishingGame(domId){
+function FishingGame(domId) {
 	
 	/**
 	* Geometry objects for defining points, rectangles, and colors.
@@ -29,15 +30,21 @@ function FishingGame(domId){
 	/**
 	* Define global scope variables.
 	*/
-	var _intro, _outro, _game, _score, _sound, _sprites, _net;
-	var _bounds=rect(0, 260, 1024, 440);
+	var _intro,
+		_outro,
+		_game,
+		_score,
+		_sound,
+		_sprites,
+		_net,
+		_bounds = rect(0, 260, 1024, 440);
 	
 	/**
 	* Controller object for interfacing with the game's sound player.
 	*/
-	function sound(){
-		var _player;
-		var _audioEnabled = false;
+	function sound() {
+		var _player,
+			_audioEnabled = false;
 		
 		function _setupSound() {
 			if (!_player) {
@@ -47,25 +54,37 @@ function FishingGame(domId){
 		}
 		
 		return {
-			startMusic:function(){
+			startMusic: function() {
 				_setupSound();
-				if (_audioEnabled) _player.startMusic();
+				if (_audioEnabled) {
+					_player.startMusic();
+				}
 			},
-			stopMusic:function(){
-				if (_audioEnabled) _player.stopMusic();
+			stopMusic: function() {
+				if (_audioEnabled) {
+					_player.stopMusic();
+				}
 			},
-			goodCatch:function(){
-				if (_audioEnabled) _player.catch();
+			goodCatch: function() {
+				if (_audioEnabled) {
+					_player['catch']();
+				}
 			},
-			badCatch:function(){
-				if (_audioEnabled) _player.block();
+			badCatch: function() {
+				if (_audioEnabled) {
+					_player.block();
+				}
 			},
-			block:function(){
-				if (_audioEnabled) _player.block();
+			block: function() {
+				if (_audioEnabled) {
+					_player.block();
+				}
 			},
-			timeout:function(){
-				if (_audioEnabled) _player.timeout();
-			},
+			timeout: function() {
+				if (_audioEnabled) {
+					_player.timeout();
+				}
+			}
 		};
 	}
 		
@@ -73,19 +92,21 @@ function FishingGame(domId){
 	* Object for managing the clock graphics display.
 	* All timer behavior is controlled within the game iteself.
 	*/
-	function clock(){
-		var _frame = rect(408, 0, 56, 56);
-		var _image = $('<canvas/>').attr({width:_frame.width, height:_frame.height}).get(0);
-		var _palette = [rgb(240,200,117), rgb(203,153,78), rgb(254,3,2)];
-		var _fill = rgb(0, 0, 0);
-		var _value = -1;
-		var _renderClock = function(percent){
-			var radius=23, r=_frame;
-			var radians = percent*2;
-			var a = percent > 0.5 ? _palette[0] : _palette[1];
-			var b = percent > 0.5 ? _palette[1] : _palette[2];
-			var p = 1-(percent > 0.5 ? percent-0.5 : percent)/0.5;
-			var ctx = _image.getContext('2d');
+	function clock() {
+		var _frame = rect(408, 0, 56, 56),
+			_image = $('<canvas/>').attr({width:_frame.width, height:_frame.height}).get(0),
+			_palette = [rgb(240,200,117), rgb(203,153,78), rgb(254,3,2)],
+			_fill = rgb(0, 0, 0),
+			_value = -1;
+			
+		function _renderClock(percent) {
+			var radius = 23,
+				r = _frame,
+				radians = percent*2,
+				a = percent > 0.5 ? _palette[0] : _palette[1],
+				b = percent > 0.5 ? _palette[1] : _palette[2],
+				p = 1-(percent > 0.5 ? percent-0.5 : percent)/0.5,
+				ctx = _image.getContext('2d');
 			
 			ctx.save();
 			ctx.clearRect(0, 0, r.width, r.height);
@@ -137,7 +158,7 @@ function FishingGame(domId){
 		return {
 			x:974,
 			y:50,
-			draw:function(ctx, percent){
+			draw: function(ctx, percent) {
 				if (Math.floor(percent*100) !== _value) {
 					// re-render the clock image each time the value changes.
 					// this should only happen once per second rather than every frame.
@@ -152,52 +173,64 @@ function FishingGame(domId){
 	/**
 	* View controller for the hook display.
 	*/
-	function hook(){
-		var ix=500, iy=350, i;
-		var _mouseHistory = [];
-		var _frame = rect(465, 0, 15, 26);
+	function hook() {
+		var ix=500,
+			iy=350,
+			i,
+			_mouseHistory = [],
+			_frame = rect(465, 0, 15, 26);
 		
 		// pre-populate mouse history with a collection of points.
-		for (i=0; i < 5; i++) _mouseHistory.push(point(ix, iy));
+		for (i=0; i < 5; i++) {
+			_mouseHistory.push(point(ix, iy));
+		}
 			
 		return {
-			x:ix,
-			y:iy,
-			rotation:0,
-			payload:null, // HookableObject
-			trendX:0,
-			trendY:0,
-			hookObject:function(hookableObject){
+			x: ix,
+			y: iy,
+			rotation: 0,
+			payload: null, // HookableObject
+			trendX: 0,
+			trendY: 0,
+			hookObject: function(hookableObject) {
 				this.payload = hookableObject;
 				this.payload.hooked = true;
 			},
-			unhookObject:function(){
+			unhookObject: function() {
 				if (!!this.payload) {
 					this.payload.hooked = false;
 					this.payload = null;
 				}
 			},		
-			catchObject:function(){
+			catchObject: function() {
 				var score = this.payload.getScore();
 				this.payload.reset();
 				this.unhookObject();
 				return score;
 			},
-			update:function(mx, my){
+			update: function(mx, my) {
 				// Cycle mouse history to always include the most recent mouse positions.
-				var prev = _mouseHistory[0];
-				var next = _mouseHistory.pop();
-				var a=prev.x-next.x, b=prev.y-next.y;
-				var move = Math.sqrt(a*a + b*b);
+				var prev = _mouseHistory[0],
+					next = _mouseHistory.pop(),
+					a = prev.x-next.x,
+					b = prev.y-next.y,
+					move = Math.sqrt(a*a + b*b),
+					avX = 0,
+					avY = 0,
+					av,
+					pt,
+					last,
+					i;
+					
 				next.x = mx;
 				next.y = Math.max(my, _bounds.y-60);
 				_mouseHistory.unshift(next);
 
 				// Calculate average position of all recorded mouse positions.
-				var avX=0, avY=0, av=_mouseHistory.length, pt, last, i;
 				this.trendX = 0;
 				this.trendY = 0;
-			
+				av = _mouseHistory.length;
+				
 				for (i=0; i < av; i++) {
 					pt = _mouseHistory[i];
 					avX += pt.x;
@@ -231,36 +264,39 @@ function FishingGame(domId){
 					}
 				}
 			},
-			draw:function(ctx){
-				var r = _frame, offset=(!!this.payload ? r.height : 0);
+			draw: function(ctx) {
+				var r = _frame,
+					offset = (!!this.payload ? r.height : 0);
+					
 				ctx.save();
 				ctx.translate(this.x, this.y);
 				ctx.rotate( this.rotation );
 				ctx.drawImage(_sprites, r.x, r.y+offset, r.width, r.height, -3, -3, r.width, r.height);
 				ctx.restore();
-			},
-		}
+			}
+		};
 	}
 	
 	/**
 	* View controller for the multiplier display.
 	*/
-	function multiplier(){
+	function multiplier() {
 		var _isActive = false;
 		return {
-			view:$('<canvas/>').get(0),
-			x:560,
-			y:140,
-			alpha:1,
-			isActive:function(){
+			view: $('<canvas/>').get(0),
+			x: 560,
+			y: 140,
+			alpha: 1,
+			isActive: function() {
 				return _isActive;
 			},
-			reset:function(x, negative){
+			reset: function(x, negative) {
 				_isActive = (x > 1);
 				
 				if (_isActive) {
-					var txt = 'x'+x;
-					var ctx = this.view.getContext('2d');
+					var txt = 'x'+x,
+						ctx = this.view.getContext('2d');
+						
 					this.view.width = 40;
 					this.view.height = 26;
 					this.alpha = 1;
@@ -272,13 +308,13 @@ function FishingGame(domId){
 					ctx.textBaseline = "top";
 					ctx.strokeStyle = "#000000";
 					ctx.fillStyle = negative ? "#FF0000" : "#FFFFFF";
-					ctx.clearRect(0, 0, this.view.width, this.view.height)
+					ctx.clearRect(0, 0, this.view.width, this.view.height);
 					ctx.strokeText(txt, 3, 3);
 					ctx.fillText(txt, 3, 3);
 				}
 				return this;
 			},
-			draw:function(ctx){
+			draw: function(ctx) {
 				ctx.save();
 				ctx.globalAlpha = ctx.globalAlpha * this.alpha;
 				ctx.drawImage(this.view, this.x, this.y);
@@ -288,14 +324,14 @@ function FishingGame(domId){
 				
 				_isActive = (this.alpha > 0);
 			}
-		}
+		};
 	}
 	
 	/**
 	* Controller object for managing hookable targets.
 	* This object is the base prototype for Fish and Jellyfish objects.
 	*/
-	function HookableObject(){}
+	function HookableObject() {}
 	(function initHookableObject(){
 		HookableObject.prototype = {
 			index:0,
@@ -315,43 +351,64 @@ function FishingGame(domId){
 			imageX:0,
 			imageY:0,
 			rotation:0,
-			rotate:function(radians){ this.rotation = radians; },
-			unwind:function(){
+			rotate: function(radians) {
+				this.rotation = radians;
+			},
+			unwind: function() {
+				var inc = 0.17,
+					pi = Math.PI;
+				
 				// Reduces rotation in small increments until it reaches zero.
 				// This method is intended to be called externally with the framerate.
-				if (this.rotation === 0) return;
-				var inc = 0.17;
+				if (this.rotation === 0) {
+					return;
+				}
 			
 				// correct extreme rotations by turning them back to within range of a single circle.
-				if (this.rotation < 0) while (this.rotation < 0) this.rotation += Math.PI*2;
-				else if (this.rotation > Math.PI*2) while (this.rotation > Math.PI*2) this.rotation -= Math.PI*2;
+				if (this.rotation < 0) {
+					while (this.rotation < 0) {
+						this.rotation += pi*2;
+					}
+				} else if (this.rotation > pi*2) {
+					while (this.rotation > pi*2) {
+						this.rotation -= pi*2;
+					}
+				}
 			
 				// increment rotation in the nearest direction back to zero.
-				if (this.rotation < Math.PI && this.rotation-inc > 0) this.rotation -= inc;
-				else if (this.rotation > Math.PI && this.rotation+inc < Math.PI*2) this.rotation += inc;
-				else this.rotation = 0;
+				if (this.rotation < pi && this.rotation-inc > 0) {
+					this.rotation -= inc;
+				} else if (this.rotation > pi && this.rotation+inc < pi*2) {
+					this.rotation += inc;
+				} else {
+					this.rotation = 0;
+				}
 			},
-			getScore:function(){ return 1; },
-			testHook:function(x, y){
+			getScore: function() {
+				return 1;
+			},
+			testHook: function(x, y) {
 				var a = this.x-x, b = this.y-y;
 				return (Math.sqrt(a*a + b*b) < 20);
 			},
-			testHit:function(x, y){
+			testHit: function(x, y) {
 				var a = this.x-x, b = this.y-y;
 				return (Math.sqrt(a*a + b*b) < 20);
 			},
-			reset:function(){
+			reset: function() {
 				this.width = Math.ceil(this.frame.width * this.scale);
 				this.height = Math.ceil(this.frame.height * this.scale);
 				this.rotation = 0;
 				this.alpha = 1;
 			},
-			update:function(){
+			update: function() {
 				this.unwind();
 			},
-			draw:function(ctx){},
-		}
-	})();
+			draw: function(ctx) {
+				// do stuff.
+			}
+		};
+	}());
 	
 	/**
 	* Controller object for managing hookable Fish targets.
@@ -365,7 +422,7 @@ function FishingGame(domId){
 		Fish.count = 15;
 		Fish.numPrize = 0;
 		Fish.allowedPrizes = 2;
-		Fish.prototype = new HookableObject;
+		Fish.prototype = new HookableObject();
 		Fish.prototype.image = null;
 		Fish.prototype.direction = 1;
 		Fish.prototype.baseSpeed = 0;
@@ -379,39 +436,52 @@ function FishingGame(domId){
 		/**
 		* Specifies the points awarded for catching the fish.
 		*/
-		Fish.prototype.getScore = function(){
+		Fish.prototype.getScore = function() {
 			return this.prize ? 50 : 1+Math.round(9*this.depth);
-		}
+		};
 
 		/**
 		* Tests a position to see if it is close enough to registration to count as a capture.
 		* Automatically restricts capture while fish is dead or in the process of turning.
 		*/
-		Fish.prototype.testHook = function(x, y){
-			if (!!this.animateTurn || this.dead) return false;
-			var a = this.x-x, b = this.y-y;
+		Fish.prototype.testHook = function(x, y) {
+			if (!!this.animateTurn || this.dead) {
+				return false;
+			}
+			var a = this.x-x,
+				b = this.y-y;
 			return (Math.sqrt(a*a + b*b) < 20);
-		}
+		};
 
 		/**
 		* Sets the fish rotation. Rotation will be adjusted to account for mirroring.
 		*/
-		Fish.prototype.rotate = function(radians){
+		Fish.prototype.rotate = function(radians) {
 			this.rotation = radians + (Math.PI/2) * (-this.direction);
-		}
+		};
 	
 		/**
 		* Resets the fish to a new random speed and position off-screen.
 		*/
-		Fish.prototype.reset = function(){
-			var minSpeed=2, maxSpeed=6, marginT=50, marginB=100;
-			if (!this.image) this.image = this.render();
+		Fish.prototype.reset = function() {
+			var minSpeed=2,
+				maxSpeed=6,
+				marginT=50,
+				marginB=100;
+				
+			if (!this.image) {
+				this.image = this.render();
+			}
 			
 			// configure prize status.
-			if (this.prize) Fish.numPrize--;
+			if (this.prize) {
+				Fish.numPrize--;
+			}
 			this.prize = (this.index >= Fish.count-Fish.allowedPrizes && Fish.numPrize < Fish.allowedPrizes && Math.random() > 0.5);
-			if (this.prize) Fish.numPrize++;
-
+			if (this.prize) {
+				Fish.numPrize++;
+			}
+			
 			this.frame = this.prize ? this.rectPrize : this.rectBasic;
 			this.width = this.prize ? this.rectPrize.width : this.image.width;
 			this.direction = (Math.random() > 0.5) ? -1 : 1;
@@ -426,25 +496,33 @@ function FishingGame(domId){
 			this.speedY = 6*Math.random()-3;
 			this.animateTurn = null;
 			this.dead = false;
-		}
+		};
 	
 		/**
 		* Updates the fish position and behavior each frame.
 		*/
-		Fish.prototype.update = function(){
-			if (this.hooked) return;
-		
+		Fish.prototype.update = function() {
+			if (this.hooked) {
+				return;
+			}
+			
 			if (!this.dead) {
 				// NOT DEAD.
 				this.x += (this.speedX + this.burstSpeed) * this.scale * this.direction;
 				this.y += this.speedY;
 		
-				if (this.x < _bounds.x-this.width || this.x > _bounds.x+_bounds.width+this.width) this.reset();
-				if (this.y <= _bounds.y || this.y >= _bounds.y+_bounds.height) this.speedY = 0;
-		
+				if (this.x < _bounds.x-this.width || this.x > _bounds.x+_bounds.width+this.width) {
+					this.reset();
+				}
+				if (this.y <= _bounds.y || this.y >= _bounds.y+_bounds.height) {
+					this.speedY = 0;
+				}
+				
 				// Run probability cases on fish behaviors.
-				var prob = Math.random();
-		
+				var prob = Math.random(),
+					self = this,
+					rate;
+					
 				if (this.burstSpeed > 0) {
 					// decrememt speed bursts.
 					this.burstSpeed -= 0.5;
@@ -456,36 +534,46 @@ function FishingGame(domId){
 					this.burstSpeed = 20 * Math.random();
 				} else if (Math.round(150 * prob) === 150) {
 					// initiate a turn sequence.
-					var self=this, rate=0.28*this.direction;
-					this.animateTurn = function(dir){
+					rate = 0.28 * this.direction;
+					this.animateTurn = function(dir) {
 						dir -= rate;
 						if (Math.abs(dir) >= 1) {
 							dir = Math.round(dir);
 							self = self.animateTurn = null;
 						}
 						return dir;
-					}
+					};
 				}
 				this.unwind();
 			
 			} else {
 				// DEAD.
 				this.alpha = (this.alpha*100-10)/100;
-				if (this.alpha<=0) this.reset();
+				if (this.alpha <= 0) {
+					this.reset();
+				}
 			}
-		}
+		};
 	
 		/**
 		* Draws the fish to the canvas.
 		*/
-		Fish.prototype.draw = function(ctx){
+		Fish.prototype.draw = function(ctx) {
 			var r;
 			ctx.save();
 			ctx.translate(this.x, this.y);
-			if (this.rotation !== 0) ctx.rotate(this.rotation);
-			if (this.direction !== 1) ctx.scale(this.direction, 1);
-			if (this.alpha < 1) ctx.globalAlpha = ctx.globalAlpha * this.alpha;
-		
+			if (this.rotation !== 0) {
+				ctx.rotate(this.rotation);
+			}
+			
+			if (this.direction !== 1) {
+				ctx.scale(this.direction, 1);
+			}
+			
+			if (this.alpha < 1) {
+				ctx.globalAlpha = ctx.globalAlpha * this.alpha;
+			}
+			
 			if (this.prize) {
 				// PRIZE FISH. Draw from source image.
 				r = this.rectPrize;
@@ -503,22 +591,33 @@ function FishingGame(domId){
 				ctx.drawImage(_sprites, r.x, r.y, r.width, r.height, -r.width/2, -r.height/2, r.width, r.height);
 			}
 			ctx.restore();
-		}
+		};
 	
 		/**
 		* Renders an image of the fish with a color transformation applied for its depth.
 		*/
 		Fish.prototype.render = function() {
-			var canvas = $('<canvas/>'), scale=0.55+(0.45*this.depth);
-			var r = this.rectBasic, cw = Math.round(r.width*scale), ch = Math.round(r.height*scale);
-			var ctx = canvas.attr({width:cw, height:ch}).get(0).getContext('2d');
+			var canvas = $('<canvas/>'),
+				scale=0.55+(0.45*this.depth),
+				r = this.rectBasic,
+				cw = Math.round(r.width*scale),
+				ch = Math.round(r.height*scale),
+				ctx = canvas.attr({width:cw, height:ch}).get(0).getContext('2d'),
+				img,
+				data,
+				len,
+				p = 0.35*(1-this.depth),
+				i;
+				
 			ctx.scale(scale, scale);
 			ctx.drawImage(_sprites, r.x, r.y, r.width, r.height, 0, 0, r.width, r.height);
 
 			// Apply color transform based on percent depth.
-			var img=ctx.getImageData(0, 0, cw, ch);
-			var data=img.data, len=data.length, p=0.35*(1-this.depth), i;
-			for (i = 0; i < len;) {
+			img = ctx.getImageData(0, 0, cw, ch);
+			data = img.data;
+			len = data.length;
+				
+			for (i = 0; i < len; i) {
 				data[i] = data[i++] * (1-p) + (115*p);
 				data[i] = data[i++] * (1-p) + (208*p);
 				data[i] = data[i++] * (1-p) + (189*p);
@@ -527,13 +626,13 @@ function FishingGame(domId){
 			ctx.putImageData(img, 0, 0);
 			$("body").append(canvas);
 			return canvas.get(0);
-		}
-	})();
+		};
+	}());
 	
 	/**
 	* Controller object for managing hookable Jellyfish targets.
 	*/
-	function Jellyfish(index){
+	function Jellyfish(index) {
 		this.index = index;
 		this.depth = index/Jellyfish.count;
 		this.blocker = true;
@@ -542,7 +641,7 @@ function FishingGame(domId){
 	}
 	(function initJellyfish(){
 		Jellyfish.count = 5;
-		Jellyfish.prototype = new HookableObject;
+		Jellyfish.prototype = new HookableObject();
 		Jellyfish.prototype.frame = rect(0, 0, 80, 105);
 		Jellyfish.prototype.speedPercent = 1;
 		Jellyfish.prototype.speedDecay = 1;
@@ -552,27 +651,31 @@ function FishingGame(domId){
 		/**
 		* Specifies the points awarded for catching a jellyfish.
 		*/
-		Jellyfish.prototype.getScore = function(){ return -25; }
+		Jellyfish.prototype.getScore = function() {
+			return -25;
+		};
 		
 		/**
 		* Tests a position to see if it is close enough to registration to count as a capture.
 		* Automatically restricts capture while fish is in the process of turning.
 		*/
-		Jellyfish.prototype.testHook = function(x, y){
+		Jellyfish.prototype.testHook = function(x, y) {
 			var a = this.x-x, b = this.y-y;
 			return (Math.sqrt(a*a + b*b) < 40);
-		}
-		Jellyfish.prototype.testHit = function(x, y){
+		};
+		Jellyfish.prototype.testHit = function(x, y) {
 			var a = this.x-x, b = this.y-y;
 			return (Math.sqrt(a*a + b*b) < 75);
-		}
+		};
 		
 		/**
 		* Resets the jellyfish position and motion trends.
 		*/
 		Jellyfish.prototype.reset = function() {
-			var dir = (Math.random() < 0.5) ? -1 : 1;
-			var marginT=50, marginB=100;
+			var dir = (Math.random() < 0.5 ? -1 : 1),
+				marginT=50,
+				marginB=100;
+				
 			this.x = (dir < 1) ? _bounds.x - this.width : _bounds.x + _bounds.width + this.width;
 			this.y = (_bounds.y + marginT) + ((_bounds.height - marginT - marginB) * this.depth);
 			this.speedDecay = 0.005 + (0.005 * Math.random());
@@ -581,22 +684,35 @@ function FishingGame(domId){
 			this.rotation = 0;
 			this.resetX();
 			this.resetY();
-		}
+		};
+		
 		Jellyfish.prototype.resetX = function() {
-			var dir = 0;
-			var edge = 250;
-			if (this.x < _bounds.x+this.edge) dir = 1;
-			else if (this.x > _bounds.x+_bounds.width-edge) dir = -1;
-			else dir = (Math.random() < 0.5 ? -1 : 1);
+			var dir = 0,
+				edge = 250;
+				
+			if (this.x < _bounds.x+this.edge) {
+				dir = 1;
+			} else if (this.x > _bounds.x+_bounds.width-edge) {
+				dir = -1;
+			} else {
+				dir = (Math.random() < 0.5 ? -1 : 1);
+			}
 			this.speedX = (2 + (4 * Math.random())) * dir;
-		}
+		};
+		
 		Jellyfish.prototype.resetY = function() {
 			var dir = 0;
-			if (this.y < _bounds.y + 75) dir = 1;
-			else if (this.y > _bounds.y + _bounds.height - 100) dir = -1;
-			else dir = (Math.random() < 0.5 ? -1 : 1);
+			
+			if (this.y < _bounds.y + 75) {
+				dir = 1;
+			} else if (this.y > _bounds.y + _bounds.height - 100) {
+				dir = -1;
+			} else {
+				dir = (Math.random() < 0.5 ? -1 : 1);
+			}
+			
 			this.speedY = (1 + Math.random()) * dir;
-		}
+		};
 		
 		/**
 		* Updates the fish position and behavior each frame.
@@ -614,17 +730,21 @@ function FishingGame(domId){
 			
 			// reset once out of _bounds.
 			if ((this.x < _bounds.x - this.width && this.speedX < 0) || 
-				(this.x > _bounds.x + _bounds.width + this.width && this.speedX > 0)) this.reset();
+				(this.x > _bounds.x + _bounds.width + this.width && this.speedX > 0)) {
+					this.reset();
+			}
 			
 			// update animation frame clocks.
 			this.animCycle++;
 			if (this.animCycle >= 4) {
 				this.animCycle = 0;
 				this.animFrame++;
-				if (this.animFrame >= 6) this.animFrame = 0;
+				if (this.animFrame >= 6) {
+					this.animFrame = 0;
+				}
 			}
 			this.unwind();
-		}
+		};
 		
 		/**
 		* Draws the jellyfish to the canvas each frame.
@@ -632,24 +752,27 @@ function FishingGame(domId){
 		Jellyfish.prototype.draw = function(ctx) {
 			ctx.save();
 			ctx.translate(this.x, this.y);
-			if (this.rotation !== 0) ctx.rotate(this.rotation);
+			if (this.rotation !== 0) {
+				ctx.rotate(this.rotation);
+			}
+			
 			ctx.drawImage(_sprites, this.width*this.animFrame, this.height, this.width, this.height, -this.width/2, -20, this.width, this.height);
 			ctx.restore();
-		}
-	})();
+		};
+	}());
 
 	/**
 	* Creates a view controller for the net graphic.
 	*/
 	function net(parent){
-		var _frame = rect(0, 215, 110, 170);
-		var _playing = false;
-		var _currentFrame = 0;
-		var _currentCycle = 0;
-		var _maxFrames = 3;
-		var _maxCycles = 1;
-		var _direction = 1;
-		var _bgCoords = function(x, y){ return '-'+x+'px -'+y+'px' };
+		var _frame = rect(0, 215, 110, 170),
+			_playing = false,
+			_currentFrame = 0,
+			_currentCycle = 0,
+			_maxFrames = 3,
+			_maxCycles = 1,
+			_direction = 1,
+			_bgCoords = function(x, y) { return '-'+x+'px -'+y+'px'; };
 		
 		return {
 			view:$('<div/>')
@@ -659,10 +782,10 @@ function FishingGame(domId){
 					height:_frame.height,
 					left:546,
 					top:66,
-					width:_frame.width,
+					width:_frame.width
 				})
 				.appendTo(parent),
-			update:function(){
+			update: function() {
 				if (_playing) {
 					if (_currentCycle++ > _maxCycles) {
 						_currentCycle = 0;
@@ -677,20 +800,20 @@ function FishingGame(domId){
 					}
 				}
 			},
-			redraw:function(){
+			redraw: function() {
 				var left = _frame.x+_frame.width*_currentFrame;
 				this.view.css({backgroundPosition:_bgCoords(left, _frame.y)});
 			},
-			play:function(){
+			play: function() {
 				_playing = true;
 			},
-			stop:function(){
+			stop: function() {
 				_playing = false;
 				_direction = 1;
 				_currentFrame = 0;
 				_currentCycle = 0;
 			}
-		}
+		};
 	}
 	
 	/**
@@ -761,20 +884,20 @@ function FishingGame(domId){
 	* Creates a view controller for the game screen.
 	*/
 	function game(parent){
-		var _alpha = 1;
-		var _points = 0;
-		var _multiplier = 1;
-		var _seconds = 0;
-		var _secondsMax = 30;
-		var _hookables = []; // Array of hookable Fish & Jellyfish objects.
-		var _target = rect(545, 175, 105, 40); // Rect of the drag-to target (net).
-		var _frameRate; // setInterval ID of the framerate interval.
-		var _timeOut; // setTimeout ID of the timer timeout.
-		var _delayBlockers = 0; // post-block time delay when blockers may not be caught.
-		var _scoredThisSecond = false; // tracks if a fish was caught during the last second.
-		var _messageField = $('<div/>').addClass('fishing-game-message');
-		var _playing = false;
-		var _running = false;
+		var _alpha = 1,
+			_points = 0,
+			_multiplier = 1,
+			_seconds = 0,
+			_secondsMax = 30,
+			_hookables = [], // Array of hookable Fish & Jellyfish objects.
+			_target = rect(545, 175, 105, 40), // Rect of the drag-to target (net).
+			_frameRate, // setInterval ID of the framerate interval.
+			_timeOut, // setTimeout ID of the timer timeout.
+			_delayBlockers = 0, // post-block time delay when blockers may not be caught.
+			_scoredThisSecond = false, // tracks if a fish was caught during the last second.
+			_messageField = $('<div/>').addClass('fishing-game-message'),
+			_playing = false,
+			_running = false;
 		
 		return {
 			view:$('<div/>')
@@ -800,11 +923,16 @@ function FishingGame(domId){
 			* Resets the game setup and starts the framerate.
 			*/
 			startGame:function(){
-				var self=this, nfish=_hookables.length;
+				var self=this,
+					nfish=_hookables.length,
+					i;
+					
 				Fish.allowedPrizes = 2;
 			
 				// Reset all fish.
-				for (i=0; i < nfish; i++) _hookables[i].reset();
+				for (i=0; i < nfish; i++) {
+					_hookables[i].reset();
+				}
 				
 				// Reset game variables.
 				_alpha = 1;
@@ -830,7 +958,7 @@ function FishingGame(domId){
 					
 					self.updateTimer();
 					self.update();
-				}
+				};
 				
 				// Play intro sequence.
 				_messageField.text('Get Ready').show();
@@ -887,21 +1015,24 @@ function FishingGame(domId){
 			* Called upon each frame refresh.
 			*/
 			update:function() {
-				var ctx = this.canvas.get(0).getContext('2d');
-				var cw = ctx.canvas.width, ch = ctx.canvas.height; // canvas width and height.
-				
-				//console.log(_playing);
-				
+				var ctx = this.canvas.get(0).getContext('2d'),
+					cw = ctx.canvas.width,
+					ch = ctx.canvas.height; // canvas width and height.
+
 				// Decrememt game alpha when no longer playing.
 				// Stop game once display has completely faded out.
 				if (!_playing) {
 					_alpha = Math.round((_alpha-0.05)*100)/100; //<< avoid repeating decimals.
-					if (_alpha <= 0) this.stopProgram();
+					if (_alpha <= 0) {
+						this.stopProgram();
+					}
 				}
 			
 				// decrement post-blocker grace period.
-				if (_delayBlockers > 0) _delayBlockers--;
-			
+				if (_delayBlockers > 0) {
+					_delayBlockers--;
+				}
+				
 				ctx.moveTo(0, 0);
 				ctx.clearRect(0, 0, cw, ch);
 				ctx.globalAlpha = _alpha;
@@ -912,20 +1043,28 @@ function FishingGame(domId){
 				this.hook.update(this.mouseX, this.mouseY);
 			
 				// Update all fish objects.
-				var blocker, fish, nfish=_hookables.length, i;
+				var blocker,
+					fish,
+					nfish=_hookables.length,
+					i;
+					
 				for (i=0; i < nfish; i++) {
 					fish = _hookables[i];
 
 					// test for catches.
 					if (!this.hook.payload && this.hook.trendY < 0 && _playing) {
 						if ( fish.testHook(this.hook.x, this.hook.y) ) {
-							if (!fish.blocker || _delayBlockers === 0) this.hook.hookObject( fish );
+							if (!fish.blocker || _delayBlockers === 0) {
+								this.hook.hookObject( fish );
+							}
 						}
 					}
 				
 					// find eligible blocker for current hook position.
-					if (!blocker && fish.blocker && fish.testHit(this.hook.x, this.hook.y)) blocker = fish;
-
+					if (!blocker && fish.blocker && fish.testHit(this.hook.x, this.hook.y)) {
+						blocker = fish;
+					}
+					
 					fish.update();
 					fish.draw(ctx);
 				}
@@ -947,7 +1086,12 @@ function FishingGame(domId){
 					_points += points;
 					_score.text( _points );
 					_net.play();
-					points > 0 ? _sound.goodCatch() : _sound.badCatch();
+					
+					if (points > 0) {
+						_sound.goodCatch();
+					} else {
+						_sound.badCatch();
+					}
 					
 					// configures the multiplier graphic.
 					this.multiplier.reset(_multiplier, points<0);
@@ -962,7 +1106,9 @@ function FishingGame(domId){
 				}
 				
 				// Render multiplier display.
-				if (this.multiplier.isActive()) this.multiplier.draw(ctx);
+				if (this.multiplier.isActive()) {
+					this.multiplier.draw(ctx);
+				}
 				
 				// Redraw hook and fishing line.
 				this.hook.draw(ctx);
@@ -979,7 +1125,9 @@ function FishingGame(domId){
 				_net.update();
 				
 				// request next animation frame while program is running.
-				if (_running) this.requestAnimFrame();
+				if (_running) {
+					this.requestAnimFrame();
+				}
 			},
 		
 			/**
@@ -990,8 +1138,14 @@ function FishingGame(domId){
 				_seconds--;
 			
 				// decrement number of allowed prizes if bonus has accrued.
-				if (!_scoredThisSecond && Fish.allowedPrizes > 2) Fish.allowedPrizes--;
-				if (!_scoredThisSecond) _multiplier = 1;
+				if (!_scoredThisSecond && Fish.allowedPrizes > 2) {
+					Fish.allowedPrizes--;
+				}
+				
+				if (!_scoredThisSecond) {
+					_multiplier = 1;
+				}
+				
 				_scoredThisSecond = false;
 			
 				if (_seconds > 0) {
@@ -1012,8 +1166,12 @@ function FishingGame(domId){
 					}).appendTo( this.view );
 
 				// Create all fish & jellyfish objects.
-				for (i=0; i < Fish.count; i++) _hookables.push( new Fish(i) );
-				for (i=0; i < Jellyfish.count; i++) _hookables.push( new Jellyfish(i) );
+				for (i=0; i < Fish.count; i++) {
+					_hookables.push( new Fish(i) );
+				}
+				for (i=0; i < Jellyfish.count; i++) {
+					_hookables.push( new Jellyfish(i) );
+				}
 				
 				$("#playback").click(function(evt){
 					evt.preventDefault();
@@ -1026,7 +1184,7 @@ function FishingGame(domId){
 					}
 				});
 			}
-		}
+		};
 	}
 
 	/**
@@ -1051,7 +1209,7 @@ function FishingGame(domId){
 		// Embed sound SWF.
 		swfobject.embedSWF("media/sound.swf", soundId, "1", "1", "9.0.45", false, {}, {}, {
 			id:soundId,
-			name:soundId,
+			name:soundId
 		});
 
 		// _sprites sheet image
@@ -1064,7 +1222,7 @@ function FishingGame(domId){
 				_intro.show();
 			})
 			.get(0);
-	})();
+	}());
 }
 
 /**
@@ -1072,6 +1230,8 @@ function FishingGame(domId){
 */
 return {
 	init:function(id) { 
-		new FishingGame(id);
-	}};
-})();
+		return new FishingGame(id);
+	}
+};
+
+}());
