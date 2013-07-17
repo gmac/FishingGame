@@ -1,0 +1,132 @@
+{"frames": {
+
+"fish1.png":
+{
+	"frame": {"x":2,"y":644,"w":89,"h":36},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":89,"h":36},
+	"sourceSize": {"w":89,"h":36}
+},
+"fish2.png":
+{
+	"frame": {"x":2,"y":107,"w":109,"h":49},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":109,"h":49},
+	"sourceSize": {"w":109,"h":49}
+},
+"hook1.png":
+{
+	"frame": {"x":93,"y":644,"w":15,"h":25},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":2,"y":0,"w":15,"h":25},
+	"sourceSize": {"w":17,"h":25}
+},
+"hook2.png":
+{
+	"frame": {"x":107,"y":428,"w":10,"h":12},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":10,"h":12},
+	"sourceSize": {"w":10,"h":12}
+},
+"inpact.png":
+{
+	"frame": {"x":2,"y":2,"w":115,"h":103},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":115,"h":103},
+	"sourceSize": {"w":115,"h":103}
+},
+"jellyfish0.png":
+{
+	"frame": {"x":2,"y":1217,"w":80,"h":105},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":80,"h":105},
+	"sourceSize": {"w":80,"h":105}
+},
+"jellyfish1.png":
+{
+	"frame": {"x":2,"y":1110,"w":80,"h":105},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":80,"h":105},
+	"sourceSize": {"w":80,"h":105}
+},
+"jellyfish2.png":
+{
+	"frame": {"x":2,"y":1003,"w":80,"h":105},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":80,"h":105},
+	"sourceSize": {"w":80,"h":105}
+},
+"jellyfish3.png":
+{
+	"frame": {"x":2,"y":896,"w":80,"h":105},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":80,"h":105},
+	"sourceSize": {"w":80,"h":105}
+},
+"jellyfish4.png":
+{
+	"frame": {"x":2,"y":789,"w":80,"h":105},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":80,"h":105},
+	"sourceSize": {"w":80,"h":105}
+},
+"jellyfish5.png":
+{
+	"frame": {"x":2,"y":682,"w":80,"h":105},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":80,"h":105},
+	"sourceSize": {"w":80,"h":105}
+},
+"wavetamer1.png":
+{
+	"frame": {"x":2,"y":158,"w":107,"h":169},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":107,"h":169},
+	"sourceSize": {"w":107,"h":169}
+},
+"wavetamer2.png":
+{
+	"frame": {"x":2,"y":428,"w":103,"h":127},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":0,"y":0,"w":103,"h":127},
+	"sourceSize": {"w":107,"h":169}
+},
+"wavetamer3.png":
+{
+	"frame": {"x":2,"y":329,"w":107,"h":97},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":0,"y":0,"w":107,"h":97},
+	"sourceSize": {"w":107,"h":169}
+},
+"wavetamer4.png":
+{
+	"frame": {"x":2,"y":557,"w":103,"h":85},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":4,"y":0,"w":103,"h":85},
+	"sourceSize": {"w":107,"h":169}
+}},
+"meta": {
+	"app": "http://www.codeandweb.com/texturepacker ",
+	"version": "1.0",
+	"image": "fishing.png",
+	"format": "RGBA8888",
+	"size": {"w":119,"h":1324},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:d85a88004f881d44a8874d549613513f$"
+}
+}

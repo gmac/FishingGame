@@ -1,0 +1,82 @@
+<html>
+<head>
+    <title>pixi.js example 1</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000000;
+        }
+    </style>
+</head>
+<body>
+
+
+<script src="js/pixi.js"></script>
+<script>
+var Fishing = {
+	bounds: new PIXI.Rectangle(0, 0, window.innerWidth, window.innerHeight)
+};
+</script>
+<script src="js/jellyfish.js"></script>
+<script src="js/fish.js"></script>
+
+<script>
+
+var stage = new PIXI.Stage(0x000033);
+var renderer = PIXI.autoDetectRenderer(Fishing.bounds.width, Fishing.bounds.height);
+var assetsToLoader = [ "img/fishing.json"];
+
+// create a new loader
+loader = new PIXI.AssetLoader(assetsToLoader);
+loader.onComplete = onAssetsLoaded
+loader.load();
+
+// add the renderer view element to the DOM
+document.body.appendChild(renderer.view);
+window.addEventListener('resize', function() {
+	var w = Fish.bounds.width = window.innerWidth;
+	var h = Fish.bounds.height = window.innerHeight;
+	renderer.resize(w, h);
+});
+
+
+function onAssetsLoaded() {
+	
+	for (var i=0; i < 5; i++) {
+	 	var texture = PIXI.Texture.fromFrame("jellyfish" + (i+1) + ".png");
+	 	Jellyfish.prototype.frames.push(texture);
+	}
+	
+	Fish.prototype.texture = PIXI.Texture.fromFrame("fish1.png");
+
+	// add a bunch of fish
+	//for (var i = 0; i < 5; i++) {
+		//stage.addChild(new Jellyfish());
+	//}
+	
+	for (var i = 0; i < 5; i++) {
+		stage.addChild(new Fish());
+	}
+	
+	// start animating
+	requestAnimFrame( animate );
+}
+
+
+function animate() {
+
+    requestAnimFrame( animate );
+	
+	for (var i=0, len=stage.children.length; i < len; i++) {
+		var child = stage.children[i];
+		if (child.update) child.update();
+	}
+	
+    // render the stage   
+    renderer.render(stage);
+}
+
+</script>
+</body>
+</html>
