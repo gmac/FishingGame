@@ -1,0 +1,18 @@
+<html>
+<head>
+	<title>HTML5 Canvas Fishing Game</title>
+	<link rel="stylesheet" href="styles/fishing.css"/>
+</head>
+<body>
+	<div id="page">
+		<div id="fishing"></div>
+	</div>
+
+	<script src="js/fishing.js"></script>
+	<script>
+	var fishing = new Fishing();
+	document.getElementById('fishing').appendChild(fishing.el);
+	fishing.load();
+	</script>
+</body>
+</html>
