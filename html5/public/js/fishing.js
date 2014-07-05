@@ -1,5 +1,24 @@
 (function() {
 
+// Object extend:
+
+function extend(obj1, obj2) {
+	var union = (typeof obj1 === 'function') ? obj1 : {};
+	var i;
+
+	for (i in obj1) {
+		if (obj1.hasOwnProperty(i)) union[i] = obj1[i];
+	}
+	for (i in obj2) {
+		if (obj2.hasOwnProperty(i)) union[i] = obj2[i];
+	}
+
+	return union;
+}
+
+// Geometry
+// --------------------------------------------------------------
+
 // Point:
 function Point(x, y) {
 	this.x = x;
@@ -46,69 +65,286 @@ Geom = {
 	}
 };
 
+// Spritesheets (?)
+// --------------------------------------------------------------
 
-function extend(obj1, obj2) {
-	var union = (typeof obj1 === 'function') ? obj1 : {};
-	var i;
-
-	for (i in obj1) {
-		if (obj1.hasOwnProperty(i)) union[i] = obj1[i];
-	}
-	for (i in obj2) {
-		if (obj2.hasOwnProperty(i)) union[i] = obj2[i];
-	}
-
-	return union;
-}
-
-var Spritesheet = {
+var SpriteSheet = {
 	frames: {
+		'intro': Geom.rect(0, 385, 736, 610),
+		'button_gofish': Geom.rect(578, 0, 158, 48),
+		'button_replay': Geom.rect(578, 0, 158, 48),
+		'button_restart': Geom.rect(578, 0, 158, 48),
 		'fish_basic': Geom.rect(18, 0, 94, 38),
 		'fish_prize': Geom.rect(0, 40, 112, 52),
 		'fish_zap': Geom.rect(112, 0, 115, 103),
 		'hook_empty': Geom.rect(465, 0, 15, 26),
 		'hook_catch': Geom.rect(465, 26, 15, 26),
+		'coins': Geom.rect(448, 59, 32, 34),
 		'clock': Geom.rect(408, 0, 56, 56),
-		'catch1': Geom.rect(0, 215, 110, 170),
-		'catch2': Geom.rect(110, 215, 110, 170),
-		'catch3': Geom.rect(220, 215, 110, 170),
-		'catch4': Geom.rect(330, 215, 110, 170),
-		'jellyfish1': Geom.rect(0, 0, 80, 105),
-		'jellyfish2': Geom.rect(80, 0, 80, 105),
-		'jellyfish3': Geom.rect(160, 0, 80, 105),
-		'jellyfish4': Geom.rect(240, 0, 80, 105),
-		'jellyfish5': Geom.rect(320, 0, 80, 105),
-		'jellyfish6': Geom.rect(400, 0, 80, 105)
+		'catch0': Geom.rect(0, 215, 110, 170),
+		'catch1': Geom.rect(110, 215, 110, 170),
+		'catch2': Geom.rect(220, 215, 110, 170),
+		'catch3': Geom.rect(330, 215, 110, 170),
+		'jellyfish0': Geom.rect(0, 0, 80, 105),
+		'jellyfish1': Geom.rect(80, 0, 80, 105),
+		'jellyfish2': Geom.rect(160, 0, 80, 105),
+		'jellyfish3': Geom.rect(240, 0, 80, 105),
+		'jellyfish4': Geom.rect(320, 0, 80, 105),
+		'jellyfish5': Geom.rect(400, 0, 80, 105)
 	},
 
-	load: function() {
-		this.image = new Image();
-		this.image.onload = function() {};
-		this.image.src = "media/sprites.png";
-	},
-
-	drawSprite: function(ctx, id, x, y) {
-		var f = this.frames[id];
-		ctx.drawImage(this.image, f.x, f.y, f.width, f.height, x, y, f.width, f.height);
+	frame: function(id) {
+		return this.frames[id];
 	}
 };
 
-var Game = this.Fishing = function() {
+// Audio Manager
+// --------------------------------------------------------------
+var AudioContext = window.AudioContext || window.webkitAudioContext;
+
+/**
+* Controller object for interfacing with the game's sound player.
+*/
+var Audio = {
+	context: (typeof AudioContext === 'function') ? new AudioContext() : null,
+
+	fx: {
+		'music': {start: 6.5, length: 34},
+		'catch_good': {start: 0, length: 1.1},
+		'catch_bad': {start: 3, length: 0.6},
+		'block': {start: 1.5, length: 1.4},
+		'timeout': {start: 4, length: 2.5}
+	},
+
+	playMusic: function(toggle) {
+		if (toggle || toggle === undefined) {
+			if (!this._music) {
+				this._music = this.playFx('music');
+			}
+		} else if (this._music) {
+			this._music.stop();
+			this._music = null;
+		}
+	},
+
+	playFx: function(id) {
+		var fx = this.fx[id];
+		this.buffer = this.buffer || Assets.get('soundfx');
+
+		if (this.context && this.buffer && fx) {
+			var source = this.context.createBufferSource();
+    	source.buffer = this.buffer;
+    	source.connect(this.context.destination);
+			source.start(0, fx.start, fx.length);
+			return source;
+		}
+	}
+};
+
+// Asset Loader / Manager
+// --------------------------------------------------------------
+var Assets = {
+	assets: {},
+
+	// Queue all provided asset paths for loading:
+	queue: function() {
+		for (var i = 0; i < arguments.length; i++) {
+			var url = arguments[i];
+
+			if (!this.assets[url]) {
+				var parsed = url.match(/^.+\/(.+)\.(.+)$/);
+				this.assets[url] = {
+					url: url,
+					id: parsed[1],
+					ext: parsed[2],
+					media: null,
+					started: false
+				};
+			}
+		}
+
+		return this;
+	},
+
+	// Load all queued assets:
+	load: function(callback) {
+		var self = this;
+		var loadCount = 0;
+
+		function testComplete() {
+			loadCount--;
+
+			if (!loadCount && typeof callback === 'function') {
+				callback();
+			}
+		}
+
+		for (var i in this.assets) {
+			var asset = this.assets[i];
+			if (this.assets.hasOwnProperty(i) && !asset.started) {
+
+				switch(asset.ext) {
+					case 'jpg':
+					case 'png':
+						asset.media = new Image();
+						asset.media.onload = testComplete;
+						asset.media.src = asset.url;
+						break;
+
+					case 'wav':
+					case 'mp3':
+						if (Audio.context) {
+							// Load and buffer audio:
+							var req = new XMLHttpRequest();
+							req.open('GET', asset.url, true);
+	  					req.responseType = 'arraybuffer';
+	  					req.onload = function() {
+	  						Audio.context.decodeAudioData(req.response, function(buffer) {
+	  							asset.media = buffer;
+	  							testComplete();
+	  						});
+	  					};
+	  					req.send();
+
+						} else {
+							// Asynchronously call completion for the asset:
+							setInterval(testComplete, 1);
+						}
+						break;
+				}
+
+				asset.started = true;
+				loadCount++;
+			}
+		}
+
+		return this;
+	},
+
+	get: function(id) {
+		for (var i in this.assets) {
+			if (this.assets[i].id === id) return this.assets[i].media; 
+		}
+		return null;
+	}
+};
+
+
+// Application Controller View
+// --------------------------------------------------------------
+
+var App = this.Fishing = function() {
 	this.el = document.createElement('canvas');
 	this.el.setAttribute('width', 1024);
 	this.el.setAttribute('height', 768);
-	this.bounds = Geom.rect(0, 260, 1024, 440);
-	this.hookables = [];
+	this.stage = this.el.getContext('2d');
 };
 
-Game.prototype = {
+App.prototype = {
+	start: function() {
+		var self = this;
+
+		Assets
+			.queue('media/sprites.png', 'media/soundfx.mp3')
+			.load(function() {
+				SpriteSheet.image = Assets.get('sprites');
+				self.intro = new IntroView(self);
+				self.game = new GameView(self);
+				self.outro = new OutroView(self);
+				self.intro.draw(self.stage);
+			});
+	}
+};
+
+// Asset Loader / Manager
+// --------------------------------------------------------------
+
+function IntroView() {
+	this.net = new NetView();
+	this.gofish = new ButtonView('button_gofish', 432, 668);
+}
+
+IntroView.prototype = {
+	x: 144,
+	y: 130,
+
+	draw: function(ctx) {
+		var f = SpriteSheet.frame('intro');
+		ctx.drawImage(SpriteSheet.image, f.x, f.y, f.width, f.height, this.x, this.y, f.width, f.height);
+		this.net.draw(ctx);
+		this.gofish.draw(ctx);
+	}
+};
+
+
+function OutroView() {
+	
+}
+
+OutroView.prototype = {
+	draw: function() {
+		
+	}
+};
+
+function ButtonView(id, x, y) {
+	this.frame = SpriteSheet.frame('button_gofish');
+	this.x = x;
+	this.y = y;
+}
+
+ButtonView.prototype = {
+	enable: function() {
+		var self = this;
+
+		this.onClick = function(evt) {
+			//if (self.frame.hitTestPoint())
+		};
+
+		document.addEventListener('click', this.onClick);
+	},
+
+	draw: function(ctx) {
+		var f = this.frame;
+		ctx.drawImage(SpriteSheet.image, f.x, f.y, f.width, f.height, this.x, this.y, f.width, f.height);
+	}
+};
+
+// Main Fishing Game ViewController
+// --------------------------------------------------------------
+
+function GameView(parent) {
+	this.parent = parent;
+	this.sprites = Assets.get('sprites');
+	this.bounds = Geom.rect(0, 260, 1024, 440);
+	this.hookables = [];
+
+	var i;
+
+	// Create all fish & jellyfish objects:
+	for (i = 0; i < Fish.count; i++) {
+		this.hookables.push(new Fish(this, i));
+	}
+
+	for (i = 0; i < Jellyfish.count; i++) {
+		this.hookables.push(new Jellyfish(this, i));
+	}
+
+	this.net = new NetView(this);
+	this.hook = new HookView(this);
+	this.clock = new ClockView(this);
+	this.bonus = new BonusView(this);
+	this.score = new ScoreView(this);
+}
+
+GameView.prototype = {
 	mouseX:0,
 	mouseY:0,
 	alpha: 1,
 	points: 0,
 	multiplier: 1,
 	seconds: 0,
-	secondsMax: 30,
+	secondsMax: 32,
 	hookables: [], // Array of hookable Fish & Jellyfish objects.
 	target: Geom.rect(545, 175, 105, 40), // Rect of the drag-to target (net).
 	frameRateId: null, // setInterval ID of the framerate interval.
@@ -120,36 +356,10 @@ Game.prototype = {
 	running: false,
 	frameHandler: null,
 	
-	load: function() {
-		var self = this;
-		this.sprites = new Image();
-		this.sprites.onload = function() {
-			var i;
-
-			// Create all fish & jellyfish objects:
-			for (i = 0; i < Fish.count; i++) {
-				self.hookables.push(new Fish(self, i));
-			}
-
-			for (i = 0; i < Jellyfish.count; i++) {
-				self.hookables.push(new Jellyfish(self, i));
-			}
-
-			self.net = new NetView(self);
-			self.hook = new HookView(self);
-			self.clock = new ClockView(self);
-			self.bonus = new BonusView(self);
-			self.score = new ScoreView(self);
-			self.sound = new Sound();
-			self.start();
-		};
-		this.sprites.src = "media/sprites.png";
-	},
-
 	/**
 	* Resets the game setup and starts the framerate.
 	*/
-	start: function(){
+	gameStart: function(){
 		var self = this;
 		Fish.allowedPrizes = 2;
 	
@@ -163,11 +373,6 @@ Game.prototype = {
 		this.points = 0;
 		this.multiplier = 1;
 		this.seconds = this.secondsMax + 1;
-		// this.score.text( this.points );
-		// this.messageField.text('').hide();
-		this.sound.startMusic();
-		this.bonus.reset(1);
-
 		this.playing = true;
 		this.running = true;
 		this.update();
@@ -180,13 +385,15 @@ Game.prototype = {
 		this.el.addEventListener('mousemove', this.onMouseMove);
 		this.requestAnimFrame();
 		this.requestTimerTick();
+		Audio.playMusic();
 	},
 
 	/**
 	* Disables the framerate to kill all game playback.
 	*/
-	stop: function() {
+	gameStop: function() {
 		this.update();
+		Audio.playFx('timeout');
 		clearTimeout(this.frameRateId);
 		clearTimeout(this.timerId);
 		this.el.removeEventListener('mousemove', this.onMouseMove);
@@ -229,7 +436,7 @@ Game.prototype = {
 			if (self.running && self.seconds > 0) {
 				self.requestTimerTick();
 			} else {
-				self.stop();
+				self.gameStop();
 			}
 		}, 1000);
 	},
@@ -238,7 +445,7 @@ Game.prototype = {
 	* Called upon each frame refresh.
 	*/
 	update: function() {
-		var ctx = this.el.getContext('2d');
+		var ctx = this.parent.el.getContext('2d');
 		var cw = ctx.canvas.width;
 		var ch = ctx.canvas.height;
 
@@ -291,7 +498,7 @@ Game.prototype = {
 		if (!!blocker && !!this.hook.payload && !this.hook.payload.blocker) {
 			this.hook.payload.dead = true;
 			this.hook.unhookObject();
-			this.sound.block();
+			Audio.playFx('block');
 			this.delayBlockers = 10;
 		}
 					
@@ -300,23 +507,17 @@ Game.prototype = {
 			var points = this.hook.catchObject() * this.multiplier;
 			this.points += points;
 			this.score.points = this.points;
+			this.bonus.add(this.multiplier);
 			this.net.play();
-			
-			if (points > 0) {
-				this.sound.goodCatch();
-			} else {
-				this.sound.badCatch();
-			}
-			
-			// configures the multiplier graphic.
-			this.bonus.reset(this.multiplier, points < 0);
-		
+
 			if (points > 0) {
 				this.scoredThisSecond = true;
 				this.multiplier++;
 				Fish.allowedPrizes++;
+				Audio.playFx('catch_good');
 			} else {
 				this.multiplier = 1;
+				Audio.playFx('catch_bad');
 			}
 		}
 
@@ -330,41 +531,11 @@ Game.prototype = {
 		ctx.restore();
 	
 		// Draw all views:
-		this.bonus.draw(ctx);
 		this.hook.draw(ctx);
 		this.clock.draw(ctx, this.seconds / this.secondsMax);
+		this.score.draw(ctx, this.points);
 		this.net.draw(ctx);
-	}
-};
-
-/**
-* Controller object for interfacing with the game's sound player.
-*/
-function Sound() {}
-
-Sound.prototype = {
-	startMusic: function() {
-
-	},
-
-	stopMusic: function() {
-
-	},
-
-	goodCatch: function() {
-
-	},
-
-	badCatch: function() {
-
-	},
-
-	block: function() {
-
-	},
-
-	timeout: function() {
-
+		this.bonus.draw(ctx, this.multiplier);
 	}
 };
 
@@ -374,23 +545,60 @@ function ScoreView(game) {
 }
 
 ScoreView.prototype = {
-	draw: function(ctx) {
+	x: 20,
+	y: 20,
 
+	draw: function(ctx, score) {
+		var f = SpriteSheet.frame('coins');
+		ctx.save();
+		ctx.fillStyle = '#fff';
+  	ctx.font = 'bold 22px PlugNickel, Arial';
+  	ctx.shadowColor = 'rgba(0,0,0,0.8)';
+  	ctx.shadowBlur = 4;
+  	ctx.fillText(score, this.x + f.width + 10, this.y + f.height/2 + 5);
+  	ctx.drawImage(SpriteSheet.image, f.x, f.y, f.width, f.height, this.x, this.y, f.width, f.height);
+  	ctx.restore();
 	}
 };
 
 
 function BonusView(game) {
 	this.parent = game;
+	this.bonuses = [];
 }
 
 BonusView.prototype = {
-	reset: function() {
+	x: 600,
+	y: 120,
 
+	add: function(value) {
+		if (value > 1) {
+			this.bonuses.push({
+				value: 'x'+value,
+				alpha: 100
+			});
+		}
 	},
 
-	draw: function() {
+	draw: function(ctx) {
+		ctx.save();
 
+		for (var i = 0; i < this.bonuses.length; i++) {
+			var bonus = this.bonuses[i];
+			var percent = bonus.alpha / 100;
+
+			ctx.fillStyle = 'rgba(255,255,255,'+ percent +')';
+	  	ctx.font = 'bold 20px PlugNickel, Arial';
+	  	ctx.fillText(bonus.value, this.x, this.y - 25 * (1-percent));
+
+	  	bonus.alpha -= 5;
+
+	  	if (bonus.alpha <= 0) {
+	  		this.bonuses.shift();
+	  	}
+		}
+
+  	ctx.restore();
 	}
 };
 
@@ -402,7 +610,6 @@ function NetView(game) {
 NetView.prototype = {
 	x: 546,
 	y: 66,
-	frame: Geom.rect(0, 215, 110, 170),
 	playing: false,
 	currentFrame: 0,
 	maxFrames: 3,
@@ -432,9 +639,9 @@ NetView.prototype = {
 			}
 		}
 
-		var f = this.frame;
+		var f = SpriteSheet.frame('catch0');
 		ctx.save();
-		ctx.drawImage(this.parent.sprites, f.x + f.width * this.currentFrame, f.y, f.width, f.height, this.x, this.y, f.width, f.height);
+		ctx.drawImage(SpriteSheet.image, f.x + f.width * this.currentFrame, f.y, f.width, f.height, this.x, this.y, f.width, f.height);
 		ctx.restore();
 	}
 };
@@ -452,7 +659,7 @@ function ClockView(parent) {
 ClockView.prototype = {
 	x: 974,
 	y: 50,
-	frame: Geom.rect(408, 0, 56, 56),
+	frame: SpriteSheet.frame('clock'),
 
 	palette: [
 		Geom.rgb(240,200,117),
@@ -497,7 +704,7 @@ ClockView.prototype = {
 		ctx.fill();
 
 		// Draw clock face.
-		ctx.drawImage(this.parent.sprites, f.x, f.y, f.width, f.height, -f.width/2, -f.height/2+2, f.width, f.height);
+		ctx.drawImage(SpriteSheet.image, f.x, f.y, f.width, f.height, -f.width/2, -f.height/2+2, f.width, f.height);
 
 		// Draw clock hand.
 		ctx.fillStyle = "#000000";
@@ -543,7 +750,7 @@ HookView.prototype = {
 	y: 330,
 	rotation: 0,
 	payload: null, // HookableObject
-	frame: Geom.rect(465, 0, 15, 26),
+	frame: SpriteSheet.frame('hook_empty'),
 	trendX: 0,
 	trendY: 0,
 
@@ -628,7 +835,7 @@ HookView.prototype = {
 		ctx.save();
 		ctx.translate(this.x, this.y);
 		ctx.rotate(this.rotation);
-		ctx.drawImage(this.parent.sprites, f.x, f.y + offset, f.width, f.height, -3, -3, f.width, f.height);
+		ctx.drawImage(SpriteSheet.image, f.x, f.y + offset, f.width, f.height, -3, -3, f.width, f.height);
 		ctx.restore();
 	}
 };
@@ -738,18 +945,18 @@ Fish.prototype = extend(Hookable, {
 	burstSpeed: 0,
 	prize: false,
 	animateTurn: null, // function for reversing the fish direction.
-	rectBasic: Geom.rect(18, 0, 94, 38),
-	rectPrize: Geom.rect(0, 40, 112, 52),
-	rectZap: Geom.rect(112, 0, 115, 103),
+	frameBasic: SpriteSheet.frame('fish_basic'),
+	framePrize: SpriteSheet.frame('fish_prize'),
+	frameZap: SpriteSheet.frame('fish_zap'),
 
 	/**
 	* Renders an image of the fish with a color transformation applied for its depth.
 	*/
 	initImage: function() {
-		var r = this.rectBasic;
+		var f = this.frameBasic;
 		var scale = 0.55 + (0.45 * this.depth);
-		var cw = Math.round(r.width * scale);
-		var ch = Math.round(r.height * scale);
+		var cw = Math.round(f.width * scale);
+		var ch = Math.round(f.height * scale);
 
 		this.image = document.createElement('canvas');
 		this.image.setAttribute('width', cw);
@@ -757,7 +964,7 @@ Fish.prototype = extend(Hookable, {
 		var ctx = this.image.getContext('2d');
 
 		ctx.scale(scale, scale);
-		ctx.drawImage(this.parent.sprites, r.x, r.y, r.width, r.height, 0, 0, r.width, r.height);
+		ctx.drawImage(SpriteSheet.image, f.x, f.y, f.width, f.height, 0, 0, f.width, f.height);
 
 		// Apply color transform based on percent depth.
 		var img = ctx.getImageData(0, 0, cw, ch);
@@ -805,8 +1012,8 @@ Fish.prototype = extend(Hookable, {
 			Fish.numPrize++;
 		}
 		
-		this.frame = this.prize ? this.rectPrize : this.rectBasic;
-		this.width = this.prize ? this.rectPrize.width : this.image.width;
+		this.frame = this.prize ? this.framePrize : this.frameBasic;
+		this.width = this.prize ? this.framePrize.width : this.image.width;
 		this.direction = (Math.random() > 0.5) ? -1 : 1;
 		this.baseSpeed = Math.floor(4*(this.prize ? 1 : this.depth));
 		this.burstSpeed = 0;
@@ -893,12 +1100,12 @@ Fish.prototype = extend(Hookable, {
 			ctx.globalAlpha = ctx.globalAlpha * this.alpha;
 		}
 
-		var r;
+		var f;
 
 		if (this.prize) {
 			// PRIZE FISH. Draw from source image.
-			r = this.rectPrize;
-			ctx.drawImage(this.parent.sprites, r.x, r.y, r.width, r.height, -r.width, -r.height/2, r.width, r.height);
+			f = this.framePrize;
+			ctx.drawImage(SpriteSheet.image, f.x, f.y, f.width, f.height, -f.width, -f.height/2, f.width, f.height);
 		} else {
 			// NORMAL FISH. Draw from colorized canvas.
 			ctx.drawImage(this.image, -this.image.width, -this.image.height/2);
@@ -906,10 +1113,10 @@ Fish.prototype = extend(Hookable, {
 	
 		if (this.dead) {
 			// DEAD FISH. Draw in zapping _sprites.
-			r = this.rectZap;
+			f = this.frameZap;
 			ctx.rotate(0);
 			ctx.scale(1, 1);
-			ctx.drawImage(this.parent.sprites, r.x, r.y, r.width, r.height, -r.width/2, -r.height/2, r.width, r.height);
+			ctx.drawImage(SpriteSheet.image, f.x, f.y, f.width, f.height, -f.width/2, -f.height/2, f.width, f.height);
 		}
 
 		ctx.restore();
@@ -933,7 +1140,7 @@ extend(Jellyfish, {
 });
 
 Jellyfish.prototype = extend(Hookable, {
-	frame: Geom.rect(0, 0, 80, 105),
+	frame: SpriteSheet.frame('jellyfish0'),
 	speedPercent: 1,
 	speedDecay: 1,
 	animFrame: 0,
@@ -1033,7 +1240,7 @@ Jellyfish.prototype = extend(Hookable, {
 			ctx.rotate(this.rotation);
 		}
 		
-		ctx.drawImage(this.parent.sprites, this.width * this.animFrame, this.height, this.width, this.height, -this.width/2, -20, this.width, this.height);
+		ctx.drawImage(SpriteSheet.image, this.width * this.animFrame, this.height, this.width, this.height, -this.width/2, -20, this.width, this.height);
 		ctx.restore();
 	}
 });
